@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>PLAY</title>
+    <script src="js/jquery-3.5.1.min.js"></script>
+    <script src="js/jquery.params.js"></script>
+     <style>
+        
+    canvas {
+            display: block;
+            border: 1px solid black;
+            margin: auto;
+        }
+        
+    </style>
+</head>
+<body>
+    <canvas id = "P_myCanvas" width = "800px" height="600px">畫布</canvas>
+    <img id = "P_unicornImgR" src="P_img/獨角獸右.png" alt="" style = "display: none"> 
+    <img id = "P_unicornImgL" src="P_img/獨角獸左.png" alt="" style = "display: none"> 
+    <img id = "P_foxImgR" src="P_img/狐狸右.png" alt="" style = "display: none"> 
+    <img id = "P_foxImgL" src="P_img/狐狸左.png" alt="" style = "display: none">
+    <img id = "P_dinosaurImgR" src="P_img/恐龍右.png" alt="" style = "display: none"> 
+    <img id = "P_dinosaurImgL" src="P_img/恐龍左.png" alt="" style = "display: none"> 
+    <img id = "P_gameInfor" src="P_img/game_infot.png" alt="" style = "display: none">
+    <img id = "P_start" src="P_img/start.png" alt="" style = "display: none">
+    <img id = "P_back" src="P_img/back.png" alt="" style = "display: none">
+    <img id = "P_gameOver" src="P_img/E_gameover.png" alt="" style = "display: none">
+    <img id = "P_win" src="P_img/E_win.png" alt="" style = "display: none">
+    
+    
+    
+    <script>
+        var P_canvas = document.getElementById("P_myCanvas");
+        var P_ctx = P_canvas.getContext("2d");
+        
+        let P_clicked = false;
+        
+        const P_audiokick = new Audio();
+        P_audiokick.src = "P_audio/kick1.mp3";
+         const P_audioclick = new Audio();
+        P_audioclick.src = "P_audio/click.mp3";
+        const P_audiolose = new Audio();
+        P_audiolose.src = "P_audio/lose.mp3";
+         const P_audiosuccess = new Audio();
+        P_audiosuccess.src = "P_audio/success.mp3";
+        const P_audiobg = new Audio();
+        P_audiobg.src = "P_audio/bg2.mp3";
+        
+        const P_status={
+            //目前狀態，只會動這個
+            current: 0,
+            //進入遊戲
+            getReady: 0,
+            //遊戲中
+            game: 1,
+            //遊戲結束
+            gameOver: 2,
+            
+        };
+        //start鈕
+        const P_btnStart={
+            img: document.getElementById("P_start"),
+            x: 310,
+            y: 320,
+            width: 200,
+            height: 130
+        };
+        //遊戲數值設定
+        const P_set={
+            //寵物
+            pet: "unicorn",
+            //成長值
+            growth: "10",
+            //心情
+            mood: "3",
+            //一進入遊戲取得基本設定
+            start: function(){
+                this.pet = $.query.get("pet");
+                this.growth = $.query.get("growth");
+                this.mood = $.query.get("mood"); 
+            }
+        };
+        
+        P_canvas.addEventListener("click", function(e) {
+            if(e.which == 1){
+                switch (P_status.current) {
+                    case P_status.getReady:
+                        let rect = P_canvas.getBoundingClientRect();
+                        let clickX = e.clientX - rect.left;
+                        let clickY = e.clientY - rect.top;
+                        if(clickX >= P_btnStart.x &&
+                          clickX <= P_btnStart.x + P_btnStart.width &&
+                          clickY >= P_btnStart.y + 35 &&
+                          clickY <= P_btnStart.y + P_btnStart.height - 35){
+                            P_audioclick.play();
+                            P_status.current = P_status.game;
+                          }
+                        break;
+                    case P_status.game:
+                        if(P_clicked == false){
+                            P_clicked = true;
+                            P_audiokick.play();
+                            P_ball.moveX = (P_line.x - P_ball.x) / 6;
+                            P_ball.moveY = (P_line.y - P_ball.y) / 6;
+                            P_ball.update();
+                            break;
+                        }
+                        break;
+                    case P_status.gameOver:
+                         let rect1 = P_canvas.getBoundingClientRect();
+                         let clickX1 = e.clientX - rect1.left;
+                         let clickY1 = e.clientY - rect1.top;
+                        
+                        if(clickX1 >= P_btnStart.x &&
+                          clickX1 <= P_btnStart.x + P_btnStart.width &&
+                          clickY1 >= P_btnStart.y + 35 &&
+                          clickY1 <= P_btnStart.y + P_btnStart.height - 35){
+                            P_audioclick.play();
+                            if(P_score.score == 0){
+                               
+                                P_set.mood = parseInt(P_set.mood);
+                                P_set.mood--;
+                                window.location.href="final.html?pet="+P_set.pet+"&growth="+P_set.growth+"&mood="+P_set.mood;
+                            }
+                            else{
+                                P_set.growth = parseInt(P_set.growth);
+                                P_set.growth++;
+                                 window.location.href="final.html?pet="+P_set.pet+"&growth="+P_set.growth+"&mood="+P_set.mood;
+                            }
+                        }
+                        break;
+                }
+            }
+        });
+        
+        //寵物(玩家)設定
+        const P_pet={
+            //寵物的圖
+            img: document.getElementById("P_unicornImgR"),
+            x: 60,
+            y: 200,
+            draw: function(){ 
+                if(P_status.current == P_status.game){ P_ctx.drawImage(this.img,this.x,this.y,this.img.width/2,this.img.height/2);
+                }
+            },
+            //一開始圖的設定
+            start: function(){
+                 if(P_set.pet == 1)
+                    this.img = document.getElementById("P_foxImgR");
+                else if(P_set.pet == 0)
+                    this.img = document.getElementById("P_dinosaurImgR");
+            }
+        };
+        
+        const P_NPC={
+            img:document.getElementById("P_unicornImgL"),
+            x : 550,
+            y: Math.floor(Math.random() * 120) + 40,
+            //每個NPC之間的距離
+            gy: 105,
+            //移動速度
+            speed: 3,
+            //數量
+            count: 3,
+            //判斷向上或向下
+            jy: false,
+            draw: function(){
+                if(P_status.current == P_status.game){ 
+                    for(let i = 0;i < this.count;i++){
+                        P_ctx.drawImage(this.img,this.x,this.y+(i*this.gy),this.img.width/2,this.img.height/2);
+                    } 
+                }
+            },
+            //控制NPC位移
+            update: function(){
+                if(P_status.current == P_status.game && P_clicked==false){
+                    let a = 3-this.count;
+                    if(this.y >= 165+ a * this.gy) this.jy = true;
+                    else if(this.y <= 50) this.jy = false;
+
+                    if(this.jy== true)
+                        this.y-=this.speed;
+                    if(this.jy==false)
+                        this.y+=this.speed;
+                }
+                
+            },
+            start: function(){
+                if(P_set.pet == "fox")
+                    this.img = document.getElementById("P_foxImgL");
+                else if(P_set.pet == "dinosaur")
+                    this.img = document.getElementById("P_dinosaurImgL");
+            }
+        };
+        
+        const P_ball={
+            //img:document.getElementById("P_ball"),
+            x: 200,
+            y: 300,
+            r: 20,
+            moveX: 0,
+            moveY: 0,
+            move: false,
+            //Bounce: false,
+            draw: function(){
+               // console.log(this.x,this.y);
+               if(P_status.current == P_status.game){
+                    P_ctx.fillStyle = "red";
+                    P_ctx.beginPath();
+                    P_ctx.arc(this.x, this.y,this.r, 0, 360 * Math.PI / 180, true);
+                    P_ctx.closePath();
+                    P_ctx.fill();
+
+                    P_ctx.fillStyle = "black";
+                    P_ctx.beginPath();
+                    P_ctx.arc(this.x, this.y, this.r, 0, 360 * Math.PI / 180, true);
+                    P_ctx.closePath();
+                    P_ctx.stroke();
+               }
+            },
+            //
+            // &&
+            //clicked == true(左鍵按下後)，球射出
+            update: function(){
+                this.move = true;
+                this.x += this.moveX;
+                this.y += this.moveY;
+                let a = P_NPC.y + (P_NPC.count * P_NPC.gy) + (P_NPC.img.height / 2);
+//                console.log("x:"+this.y);
+//                console.log("P_NPC.x:"+P_NPC.y);
+//                console.log("P_NPC.x2:"+ a);
+                //有接到球
+                if((this.x >= P_NPC.x+5 && this.x <= P_NPC.x + (P_NPC.img.width/3)) && (this.y >= P_NPC.y && this.y <= P_NPC.y + (P_NPC.count * P_NPC.gy) + (P_NPC.img.height / 3))){
+                    P_audiosuccess.play();
+                    if(P_NPC.count == 1){
+                        P_score.win();
+                    }
+                    else{
+                        P_score.success();
+                    }
+                    this.move = false;
+
+                }
+                //球跑到NPC後卻沒碰到NPC
+                else if((this.x >= P_NPC.x + P_NPC.img.width / 2)&& 
+                   ((this.y >= P_NPC.y + (P_NPC.count * P_NPC.gy) + P_NPC.img.height / 2) ||
+                   (this.y <= P_NPC.y))){
+                    P_audiolose.play();
+                     P_score.lose();
+                    this.move = false;
+                   
+                }
+                //碰到牆壁反彈
+                else if(this.y <= (this.r + 40) || this.y >= P_canvas.height - this.r - 40){
+                    this.moveY *= -1;
+                }
+            }
+        };
+        
+        const P_line={
+            x: P_ball.x+1*Math.cos(0*Math.PI/180),
+            y: P_ball.y+1*Math.sin(0*Math.PI/180),
+            kao: 0,
+            speed: 2,
+            draw:function(){
+                if(P_status.current == P_status.game && P_clicked == false){
+                    P_ctx.fillStyle = "black";
+                    P_ctx.beginPath();
+                    P_ctx.moveTo(P_ball.x, P_ball.y);
+                    P_ctx.lineTo(this.x,this.y);
+                    P_ctx.closePath();
+                    P_ctx.stroke(); 
+                }
+            },
+            update: function(){
+                if(P_status.current == P_status.game && P_clicked == false){
+                    this.x = P_ball.x + 70 * Math.cos(this.kao * Math.PI / 180);
+                    this.y = P_ball.y + 70 * Math.sin(this.kao * Math.PI / 180);
+
+                    this.kao -= this.speed;
+
+                    if(this.kao < -65 || this.kao > 65)
+                        this.speed *= -1;
+                }
+            }
+        };
+         
+        const P_getReady={
+            img_infor: document.getElementById("P_gameInfor"),
+            
+            x: 125,
+            y: 50,
+            str: "遊戲規則",
+            str1: "按下滑鼠左鍵，球會沿黑線方向射出",
+            str2: "接到球即可進入下一關",
+            str3: "若有一球沒接到，生命-1",
+            str4: "共有三條命，生命為零，闖關失敗",
+            str5: "共有三關，三關皆過，闖關成功",
+            
+            draw: function(){
+                if (P_status.current == P_status.getReady) {
+                    P_ctx.fillStyle = "black";
+                    P_ctx.drawImage(this.img_infor,this.x,this.y,550,260);
+                    P_ctx.font = "25px 微軟正黑體";
+                    P_ctx.fillText(this.str,350,100); 
+                    P_ctx.fillText(this.str1,195,135);
+                    P_ctx.fillText(this.str2,195,170);
+                    P_ctx.fillText(this.str3,195,205);
+                    P_ctx.fillText(this.str4,195,240);
+                    P_ctx.fillText(this.str5,195,275);
+                    P_ctx.drawImage(P_btnStart.img,P_btnStart.x,P_btnStart.y,P_btnStart.width,P_btnStart.height);
+                }
+            }
+        };
+        
+       const P_bcakg={
+           level: 1,
+            //img: document.getElementById("P_bg"),
+            draw: function(){
+                P_ctx.fillStyle = "gray";
+                P_ctx.fillRect(0,570,800,30);
+                P_ctx.fillRect(0,0,800,30);
+                P_ctx.fillStyle = "#FFFF93";
+                P_ctx.fillRect(0,30,800,540);
+                P_ctx.fillStyle = "black";
+                P_ctx.font = "30px 微軟正黑體";
+                if (P_status.current == P_status.game) 
+                    P_ctx.fillText("第" + this.level + "關",350,60); 
+            }
+        };
+        const P_score={
+            score: 3,
+            gameoverImg: document.getElementById("P_gameOver"),
+            winImg:document.getElementById("P_win"),
+            backImg:document.getElementById("P_back"),
+            draw: function(){
+                if(P_status.current == P_status.game){
+                     P_ctx.font = "30px 微軟正黑體";
+                     P_ctx.fillText(this.score,20,60); 
+                }
+                
+                if(P_status.current == P_status.gameOver){
+                     P_ctx.drawImage(this.backImg,P_btnStart.x,P_btnStart.y,P_btnStart.width,P_btnStart.height);
+                    
+                    if(this.score == 0)
+                        P_ctx.drawImage(this.gameoverImg,100,20,600,400);
+                    else
+                        P_ctx.drawImage(this.winImg,100,30,630,400);
+                }
+            },
+            success: function(){
+                P_ball.x=200;
+                P_ball.y=300;
+                P_clicked = false;
+                P_NPC.count--;
+                P_bcakg.level++;
+            },
+            lose: function(){
+                this.score--;
+                P_ball.x=200;
+                P_ball.y=300;
+                P_clicked = false;
+               
+            },
+            update: function(){
+                if(this.score == 0){
+                    P_status.current = P_status.gameOver;
+                   
+                }
+            },
+            win:function(){
+                P_status.current = P_status.gameOver;
+            }  
+        };
+        
+        function P_draw(){
+            P_ctx.clearRect(0,0,800,600);
+            P_bcakg.draw();
+            P_pet.draw();
+            P_NPC.draw();
+            P_ball.draw();
+            P_line.draw();
+            P_getReady.draw();
+           
+            P_score.draw();
+        }
+        function P_update(){
+            P_NPC.update();
+            P_line.update();
+            if(P_ball.move == true)
+                P_ball.update();
+            P_score.update();
+            if(P_status.current == P_status.game)
+                P_audiobg.play();
+            if(P_status.current == P_status.gameOver)
+                P_audiobg.pause();
+        }
+        function P_loop(){
+            P_update();
+            P_draw();
+            requestAnimationFrame(P_loop);
+        }
+            
+         function P_start(){
+            P_set.start();
+            P_pet.start();
+            P_NPC.start();
+            P_loop();
+        }
+        
+        P_start();
+    </script>
+</body>
+</html>

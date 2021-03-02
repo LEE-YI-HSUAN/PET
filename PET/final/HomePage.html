@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>HOME</title>
+    <script src="../final/js/jquery-3.5.1.min.js"></script>
+    <script src="../final/js/jquery.params.js"></script>
+    <style>
+        canvas {
+            margin: 0 auto;
+            display: block;
+            border: 1px solid black;
+        }
+
+    </style>
+</head>
+
+<body>
+    <canvas id="myCanvas" width="800" height="600"></canvas>
+    <script>
+        const canvas = document.getElementById("myCanvas");
+        const ctx = canvas.getContext("2d");
+
+        const music = new Audio();
+        music.src = "audio/little_idea.mp3";
+        
+        const status = {
+            current: 0,
+            getReady: 0,
+            pet_select: 1
+        }
+
+        let pet = {
+            p_sel: null,
+            din: 0,
+            fox: 1,
+            uni: 2
+        }
+
+        let mood = 3;
+        let growth = 0;
+
+        canvas.addEventListener("click", function(e) {
+            switch (status.current) {
+                case status.getReady:
+                    status.current = status.pet_select;
+                    break;
+                case status.pet_select:
+                    let p_rect = canvas.getBoundingClientRect();
+                    let p_clickX = e.clientX - p_rect.left;
+                    let p_clickY = e.clientY - p_rect.top;
+                    if (p_clickX >= Fox.dx &&
+                        p_clickX <= Fox.dx + Fox.dw &&
+                        p_clickY >= Fox.dy &&
+                        p_clickY <= Fox.dy + Fox.dh) {
+                        status.current = status.game;
+                        pet.p_sel = pet.fox;
+                        window.location.href = "final.html?pet=" + pet.p_sel + "&growth=" + growth + "&mood=" + mood;
+                    }
+                    if (p_clickX >= Uni.dx &&
+                        p_clickX <= Uni.dx + Uni.dw &&
+                        p_clickY >= Uni.dy &&
+                        p_clickY <= Uni.dy + Uni.dh) {
+                        status.current = status.game;
+                        pet.p_sel = pet.uni;
+                        window.location.href = "final.html?pet=" + pet.p_sel + "&growth=" + growth + "&mood=" + mood;
+                    }
+                    if (p_clickX >= Din.dx &&
+                        p_clickX <= Din.dx + Din.dw &&
+                        p_clickY >= Din.dy &&
+                        p_clickY <= Din.dy + Din.dh) {
+                        status.current = status.game;
+                        pet.p_sel = pet.din;
+                        window.location.href = "final.html?pet=" + pet.p_sel + "&growth=" + growth + "&mood=" + mood;
+                    }
+                    break;
+            }
+        });
+        
+        const title = new Image();
+        title.src = "sourceimage/title.png";
+        const Title = {
+            sx: 0,
+            sy: 0,
+            sw: 454,
+            sh: 236,
+            dx: canvas.width / 2 - 270,
+            dy: canvas.height / 2 - 250,
+            dw: 550,
+            dh: 250,
+            draw: function() {
+                if (status.current == status.getReady || status.current == status.pet_select) {
+                    ctx.drawImage(title, this.sx, this.sy, this.sw, this.sh, this.dx, this.dy, this.dw, this.dh);
+                }
+            }
+        }
+
+        const sprite = new Image();
+        sprite.src = "sourceimage/unnamed.jpg";
+        const bg = {
+            sx: 0,
+            sy: 0,
+            sw: 780,
+            sh: 438,
+            dx: 0,
+            dy: 0,
+            dw: 800,
+            dh: 600,
+            draw: function() {
+                if (status.current == status.getReady || status.current == status.pet_select) {
+                    ctx.drawImage(sprite, this.sx, this.sy, this.sw, this.sh, this.dx, this.dy, this.dw, this.dh);
+                }
+            }
+        }
+
+        const start = new Image();
+        start.src = "sourceimage/start.png";
+        const getReady = {
+            sx: 54,
+            sy: 113,
+            sw: 190,
+            sh: 63,
+            dx: canvas.width / 2 - 95,
+            dy: canvas.height / 2 + 50,
+            dw: 190,
+            dh: 63,
+            draw: function() {
+                if (status.current == status.getReady) {
+                    ctx.drawImage(start, this.sx, this.sy, this.sw, this.sh, this.dx, this.dy, this.dw, this.dh);
+                }
+            }
+        }
+
+        const fox = new Image();
+        fox.src = "sourceimage/fox.png";
+        const Fox = {
+            sx: 0,
+            sy: 0,
+            sw: 256,
+            sh: 256,
+            dx: canvas.width / 2 - 50,
+            dy: canvas.height / 2 + 50,
+            dw: 100,
+            dh: 100,
+            draw: function() {
+                if (status.current == status.pet_select) {
+                    const fox_ = new Image();
+                    fox_.src = "sourceimage/fox_.png";
+                    ctx.drawImage(fox_, this.sx, this.sy, this.sw, this.sh, this.dx, this.dy, this.dw, this.dh);
+                }
+            }
+        }
+
+        const uni = new Image();
+        uni.src = "sourceimage/uni.png";
+        const Uni = {
+            sx: 0,
+            sy: 0,
+            sw: 256,
+            sh: 256,
+            dx: canvas.width / 2 + 150,
+            dy: canvas.height / 2 + 50,
+            dw: 100,
+            dh: 100,
+            draw: function() {
+                if (status.current == status.pet_select) {
+                    const uni_ = new Image();
+                    uni_.src = "sourceimage/uni_.png";
+                    ctx.drawImage(uni_, this.sx, this.sy, this.sw, this.sh, this.dx, this.dy, this.dw, this.dh);
+                }
+            }
+        }
+
+        const dinosuar = new Image();
+        dinosuar.src = "sourceimage/dinosaur.png";
+        const Din = {
+            sx: 0,
+            sy: 0,
+            sw: 256,
+            sh: 256,
+            dx: canvas.width / 2 - 250,
+            dy: canvas.height / 2 + 50,
+            dw: 100,
+            dh: 100,
+            draw: function() {
+                if (status.current == status.pet_select) {
+                    const dinosuar_ = new Image();
+                    dinosuar_.src = "sourceimage/dinosaur_.png";
+                    ctx.drawImage(dinosuar_, this.sx, this.sy, this.sw, this.sh, this.dx, this.dy, this.dw, this.dh);
+                }
+            }
+        }
+
+        function draw() {
+            bg.draw();
+            Title.draw();
+            getReady.draw();
+            Fox.draw();
+            Uni.draw();
+            Din.draw();
+        }
+
+        function loop() {
+            draw();
+            music.play();
+            requestAnimationFrame(loop);
+        }
+        loop();
+
+    </script>
+</body>
+
+</html>

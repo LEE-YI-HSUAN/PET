@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>EAT</title>
+    <script src="js/jquery-3.5.1.min.js"></script>
+    <script src="js/jquery.params.js"></script>
+    <script>
+        var pet = $.query.get("pet");
+        console.log(pet);
+        
+        var growth = $.query.get("growth");
+        console.log(growth);
+        
+        var mood = $.query.get("mood");
+        console.log(mood);
+       
+        
+    </script>
+    <style type="text/css">
+        * {
+            padding: 0;
+            margin: 0 auto;
+        }
+
+        canvas {
+            display: block;
+        }
+
+    </style>
+</head>
+
+<body>
+    <canvas id="myCanvas" width="800" height="600"></canvas>
+    <script type="text/javascript">
+        const canvas = document.getElementById("myCanvas");
+        const ctx = canvas.getContext("2d");
+        const bomb = new Image();
+        bomb.src = 'E_img/E_bomb.png';
+        const meat1 = new Image();
+        meat1.src = 'E_img/E_meat1.png';
+        const unicorn = new Image();
+        unicorn.src = 'E_img/unicorn.png';
+        const fox = new Image();
+        fox.src = 'E_img/fox.png';
+        const dinosaur = new Image();
+        dinosaur.src = 'E_img/dinosaur.png';
+        const EAT_text = new Image();
+        EAT_text.src = 'E_img/E_text.png';
+        const bStart = new Image();
+        bStart.src = 'E_img/E_start.png';
+        const bBack = new Image();
+        bBack.src = 'E_img/back.png';
+        const E_gameover = new Image();
+        E_gameover.src = 'E_img/E_gameover.png';
+        const E_win = new Image();
+        E_win.src = 'E_img/E_win.png';
+        const E_bite = new Audio();
+        E_bite.src = "sound/E_bite.mp3";
+        const E_booom = new Audio();
+        E_booom.src = "sound/E_booom.wav";
+        const E_music = new Audio();
+        E_music.src = "sound/E_music.mp3";
+        let frames = 0;
+        let whichpet;
+        var wl = 0;
+        if (pet == 2) {
+            whichpet = unicorn;
+        }
+        if (pet == 1) {
+            whichpet = fox;
+        }
+        if (pet == 0) {
+            whichpet = dinosaur;
+        }
+        const E_pet = {
+            x: canvas.width / 2 - 50,
+            y: canvas.height - 150,
+            w: 256,
+            h: 256,
+            draw: function() {
+                ctx.drawImage(whichpet, this.x, this.y, this.w / 2, this.h / 2);
+            }
+        }
+        const E_bg = {
+            sx: 0,
+            sy: 0,
+            sw: canvas.width,
+            sh: canvas.height,
+            draw: function() {
+                ctx.fillStyle = "skyblue";
+                ctx.fillRect(this.sx, this.sy, this.sw, this.sh);
+                ctx.fillStyle = "lightgreen";
+                ctx.fillRect(this.sx, this.sh - 50, this.sw, this.sh);
+            }
+
+        }
+        const E_food = {
+            w: 256,
+            h: 256,
+            downspeed: 4,
+            position: [],
+            draw: function() {
+                if (E_status.current == E_status.game) {
+                    for (var i = 0; i < this.position.length; i++) {
+                        let foodX = this.position[i].x;
+                        let foodY = this.position[i].y;
+                        ctx.drawImage(meat1, foodX, foodY, this.w / 3, this.h / 3);
+                        //ctx.strokeRect(foodX+22,foodY,this.w/5,this.h/3-10);
+                    }
+                }
+            },
+            update: function() {
+                if (E_status.current !== E_status.game) return;
+                if (frames % 150 == 0) {
+                    this.position.push({
+                        x: canvas.width * Math.random(),
+                        y: 0
+                    });
+                }
+                //肉肉往下
+                for (var i = 0; i < this.position.length; i++) {
+                    this.position[i].y += this.downspeed;
+                    if (this.position[i].x + 22 < E_pet.x - 15 + E_pet.w / 2 &&
+                        this.position[i].x + 22 + this.w / 5 > E_pet.x + 5 &&
+                        this.position[i].y + this.h / 3 - 10 > E_pet.y + 15) {
+                        E_bite.play();
+                        E_score.value += 1;
+                        this.position.splice(i, 1);
+                    } else if (this.position[i].y > canvas.height - (40 + this.h / 3)) {
+                        this.position.shift(); //把消失的刪掉
+                    }
+                }
+            }
+        }
+        const E_bomb = {
+            w: 256,
+            h: 256,
+            downspeed: 5,
+            position: [],
+            draw: function() {
+                if (E_status.current == E_status.game) {
+                    for (var i = 0; i < this.position.length; i++) {
+                        let bomX = this.position[i].x;
+                        let bomY = this.position[i].y;
+                        ctx.drawImage(bomb, bomX, bomY, this.w / 3, this.h / 3);
+                    }
+                }
+            },
+            update: function() {
+                if (E_status.current !== E_status.game) return;
+                if (frames % 50 == 0) {
+                    this.position.push({
+                        x: canvas.width * Math.random(),
+                        y: 0
+                    });
+                }
+                //往下
+                for (var i = 0; i < this.position.length; i++) {
+                    this.position[i].y += this.downspeed;
+                    if (this.position[i].x + 22 < E_pet.x - 15 + E_pet.w / 2 &&
+                        this.position[i].x + 22 + this.w / 5 > E_pet.x + 5 &&
+                        this.position[i].y + this.h / 3 - 10 > E_pet.y + 15) {
+                        E_booom.play();
+                        E_life.value -= 1;
+                        this.position.splice(i, 1);
+                    } else if (this.position[i].y > canvas.height - (40 + this.h / 3)) {
+                        this.position.shift(); //把消失的刪掉
+                    }
+                }
+            }
+        }
+        const E_score = {
+            value: 0,
+            draw: function() {
+                ctx.fillStyle = "white";
+                ctx.strokeStyle = "black";
+
+                if (E_status.current == E_status.game) {
+                    ctx.lineWidth = 2;
+                    ctx.font = "35px 微軟正黑體";
+                    ctx.fillText(this.value, canvas.width / 2, 50);
+                    ctx.strokeText(this.value, canvas.width / 2, 50);
+                    if (this.value == 10) {
+                        wl = 2;
+                        E_status.current = E_status.gameOver;
+                    }
+                }
+            }
+        }
+        const E_life = {
+            x: canvas.width - 160,
+            y: 40,
+            r: 25,
+            n: 60,
+            value: 3,
+            draw: function() {
+                if (E_status.current == E_status.game) {
+                    for (var i = 0; i < this.value; i++) {
+                        ctx.save();
+                        ctx.strokeStyle = "grey";
+                        ctx.fillStyle = "white";
+                        ctx.beginPath();
+                        ctx.arc(this.x + this.n * i, this.y, this.r, 0, Math.PI * 2, true);
+                        ctx.closePath();
+                        ctx.fill();
+                        ctx.stroke();
+                        ctx.restore();
+                    }
+                    if (this.value == 0) {
+                        wl = 1;
+                        E_status.current = E_status.gameOver;
+                    }
+                }
+            }
+        }
+        const E_btnStart = {
+            x: canvas.width / 2 - 50,
+            y: canvas.height / 2,
+            w: 256,
+            h: 256,
+            dy: canvas.height / 2 + 32,
+            draw: function() {
+                if (E_status.current == E_status.getReady) {
+                    ctx.drawImage(bStart, this.x, this.y, this.w / 2, this.h / 2);
+                }
+            }
+        }
+        const E_btnBack = {
+            x: canvas.width / 2 - 50,
+            y: canvas.height / 2,
+            w: 256,
+            h: 256,
+            dy: canvas.height / 2 + 32,
+            draw: function() {
+                if (E_status.current == E_status.gameOver) {
+                    ctx.drawImage(bBack, this.x, this.y, this.w / 2, this.h / 2);
+                }
+            }
+        }
+        const E_text = {
+            x: canvas.width / 2 - 250,
+            y: canvas.height / 10,
+            w: 256,
+            h: 256,
+            text: [
+                "吃肉肉才會快快長大!",
+                "遊玩方式:用滑鼠左右移動",
+                "接到十個肉 -> 成功(成長值加一格)",
+                "接到三次炸彈 -> 失敗(扣一顆心)"
+            ],
+            draw: function() {
+                if (E_status.current == E_status.getReady) {
+                    ctx.drawImage(EAT_text, this.x, this.y, this.w * 2, this.h);
+                    ctx.fillStyle = "darkblue";
+                    ctx.font = "20pt 微軟正黑體";
+                    for (var i = 0; i < this.text.length; i++) {
+                        ctx.fillText(this.text[i], this.x + 75, this.y + 55 * (i + 1));
+                    }
+                }
+            }
+        }
+
+        const E_gameOver = {
+            x: canvas.width / 2 - 170,
+            y: 0,
+            w: 384,
+            h: 384,
+            draw: function() {
+                if (E_status.current == E_status.gameOver) {
+                    if (wl == 1) {
+                        ctx.drawImage(E_gameover, this.x, this.y, this.w, this.h);
+                    }
+                }
+            }
+        }
+        const E_gameWin = {
+            x: canvas.width / 2 - 170,
+            y: 0,
+            w: 384,
+            h: 384,
+            draw: function() {
+                if (E_status.current == E_status.gameOver) {
+                    if (wl == 2) {
+                        ctx.drawImage(E_win, this.x, this.y, this.w, this.h);
+                    }
+                }
+            }
+        }
+        const E_status = {
+            current: 0,
+            getReady: 0,
+            game: 1,
+            gameOver: 2,
+        }
+        canvas.onmousemove = function(e) {
+            //.getBoundingClientRect()可取該物件到螢幕的距離
+            E_pet.x = e.clientX - canvas.getBoundingClientRect().left - 70;
+        }
+        canvas.addEventListener("click", function(e) {
+            let rect = canvas.getBoundingClientRect(); //取得畫布與螢幕畫面的邊界
+            //滑鼠目前螢幕的位置減去畫布距離左邊的長度，即為滑鼠在畫布中的位置座標
+            let clickX = e.clientX - rect.left;
+            let clickY = e.clientY - rect.top;
+            switch (E_status.current) {
+
+                case E_status.getReady:
+                    E_music.play();
+
+                    if (clickX >= E_btnStart.x && clickX <= E_btnStart.x + E_btnStart.w / 2 &&
+                        clickY >= E_btnStart.dy && clickY <= E_btnStart.dy + E_btnStart.h / 4) {
+                        E_status.current = E_status.game;
+                    }
+                    break;
+
+                case E_status.game:
+
+                    break;
+                case E_status.gameOver:
+                    let clickX1 = e.clientX - rect.left;
+                    let clickY1 = e.clientY - rect.top;
+                    if (clickX1 >= E_btnBack.x && clickX1 <= E_btnBack.x + E_btnBack.w / 2 &&
+                        clickY1 >= E_btnBack.dy && clickY1 <= E_btnBack.dy + E_btnBack.h / 4) {
+                        if (wl == 1) //lose
+                        {
+                            mood--;
+                            window.location.href = "final.html?pet=" + pet + "&growth=" + growth + "&mood=" + mood;
+                        }
+                        if (wl == 2) //lose
+                        {
+                            growth++;
+                            window.location.href = "final.html?pet=" + pet + "&growth=" + growth + "&mood=" + mood;
+                        }
+                    }
+                    break;
+            }
+        });
+
+        function E_draw() {
+            E_bg.draw();
+            E_pet.draw();
+            E_food.draw();
+            E_bomb.draw();
+            E_text.draw();
+            E_btnStart.draw();
+            E_gameOver.draw();
+            E_gameWin.draw();
+            E_btnBack.draw();
+            E_score.draw();
+            E_life.draw();
+        }
+
+        function E_update() {
+            E_food.update();
+            E_bomb.update();
+        }
+
+        function E_loop() {
+            frames++;
+            E_update();
+            E_draw();
+            requestAnimationFrame(E_loop);
+        }
+        E_loop();
+
+    </script>
+</body>
+
+</html>

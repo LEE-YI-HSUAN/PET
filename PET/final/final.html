@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Document</title>
+    <script src="../final/js/jquery-3.5.1.min.js"></script>
+    <script src="../final/js/jquery.params.js"></script>
+    <style>
+        canvas {
+            margin: 0 auto;
+            display: block;
+            border: 1px solid black;
+        }
+
+    </style>
+</head>
+
+<body>
+
+ 
+    <canvas id="myCanvas" width="800" height="600"></canvas>
+    <script>
+        const canvas = document.getElementById("myCanvas");
+        const ctx = canvas.getContext("2d");
+
+        const music = new Audio();
+        music.src = "audio/little_idea.mp3";
+        const GO1 = new Audio();
+        GO1.src = "audio/Sad_Violin.mp3";
+        const GO2 = new Audio();
+        GO2.src = "audio/gameover_win.mp3";
+
+        const status = {
+            current: 2,
+            game: 2,
+            gameOver1: 3,
+            gameOver2: 4
+        }
+
+        const room = {
+            r_sel: 1,
+            living: 1,
+            bed: 2,
+            door: 3,
+            feast: 4
+        }
+
+        var pet = $.query.get("pet");
+        console.log(pet);
+        var growth = $.query.get("growth");
+        console.log(growth);
+        var mood = $.query.get("mood");
+        console.log(mood);
+
+
+        canvas.addEventListener("click", function(e) {
+            switch (status.current) {
+                case status.game:
+                    let rect = canvas.getBoundingClientRect();
+                    let clickX = e.clientX - rect.left;
+                    let clickY = e.clientY - rect.top;
+                    if (clickX >= leftArrow.dx &&
+                        clickX <= leftArrow.dx + leftArrow.dw &&
+                        clickY >= leftArrow.dy &&
+                        clickY <= leftArrow.dy + leftArrow.dh) {
+                        room.r_sel = room.living;
+                    }
+                    if (clickX >= rightArrow.dx &&
+                        clickX <= rightArrow.dx + rightArrow.dw &&
+                        clickY >= rightArrow.dy &&
+                        clickY <= rightArrow.dy + rightArrow.dh) {
+                        room.r_sel = room.bed;
+                    }
+                    if (clickX >= Play.dx &&
+                        clickX <= Play.dx + Play.dw &&
+                        clickY >= Play.dy &&
+                        clickY <= Play.dy + Play.dh) {
+                        window.location.href = "play.html?pet=" + pet + "&growth=" + growth + "&mood=" + mood;
+                    }
+                    if (room.r_sel == room.living) {
+                        if (clickX >= Eat.dx &&
+                            clickX <= Eat.dx + Eat.dw &&
+                            clickY >= Eat.dy &&
+                            clickY <= Eat.dy + Eat.dh) {
+                            window.location.href = "Eat.html?pet=" + pet + "&growth=" + growth + "&mood=" + mood;
+                        }
+                    }
+                    if (room.r_sel == room.bed) {
+                        if (clickX >= Sleep.dx &&
+                            clickX <= Sleep.dx + Eat.dw &&
+                            clickY >= Sleep.dy &&
+                            clickY <= Sleep.dy + Sleep.dh) {
+                            window.location.href = "sleep.html?pet=" + pet + "&growth=" + growth + "&mood=" + mood;
+                        }
+                    }
+                    break;
+                case status.gameOver1:
+                    let restart1_rect = canvas.getBoundingClientRect();
+                    let restart1_clickX = e.clientX - restart1_rect.left;
+                    let restart1_clickY = e.clientY - restart1_rect.top;
+                    if (restart1_clickX >= getReady.dx &&
+                        restart1_clickX <= getReady.dx + getReady.dw &&
+                        restart1_clickY >= getReady.dy &&
+                        restart1_clickY <= getReady.dy + getReady.dh) {
+                        window.location.href = "HomePage.html?";
+                    }
+                    break;
+                case status.gameOver2:
+                    let restart2_rect = canvas.getBoundingClientRect();
+                    let restart2_clickX = e.clientX - restart2_rect.left;
+                    let restart2_clickY = e.clientY - restart2_rect.top;
+                    if (restart2_clickX >= getReady.dx &&
+                        restart2_clickX <= getReady.dx + getReady.dw &&
+                        restart2_clickY >= getReady.dy &&
+                        restart2_clickY <= getReady.dy + getReady.dh) {
+                        window.location.href = "HomePage.html?";
+                    }
+                    break;
+            }
+        });
+
+        const start = new Image();
+        start.src = "sourceimage/start.png";
+        const getReady = {
+            sx: 54,
+            sy: 113,
+            sw: 190,
+            sh: 63,
+            dx: canvas.width / 2 - 95,
+            dy: canvas.height / 2 - 31.5,
+            dw: 190,
+            dh: 63,
+            draw: function() {
+                if (status.current == status.gameOver1 || status.current == status.gameOver2) {
+                    ctx.drawImage(start, this.sx, this.sy, this.sw, this.sh, this.dx, this.dy, this.dw, this.dh);
+                }
+            }
+        }
+
+        const bedroom = {
+            sx: 0,
+            sy: 0,
+            sw: 990,
+            sh: 654,
+            dx: 0,
+            dy: 0,
+            dw: 800,
+            dh: 600,
+            draw: function() {
+                if (room.r_sel == room.bed) {
+                    const room = new Image();
+                    room.src = "sourceimage/room.jpg";
+                    ctx.drawImage(room, this.sx, this.sy, this.sw, this.sh, this.dx, this.dy, this.dw, this.dh);
+                }
+            }
+        }
+
+        const livingroom = new Image();
+        livingroom.src = "sourceimage/living_room.jpg";
+        const Livingroom = {
+            sx: 70,
+            sy: 0,
+            sw: 800,
+            sh: 540,
+            dx: 0,
+            dy: 0,
+            dw: 800,
+            dh: 600,
+            draw: function() {
+                if (room.r_sel == room.living) {
+                    ctx.drawImage(livingroom, this.sx, this.sy, this.sw, this.sh, this.dx, this.dy, this.dw, this.dh);
+                }
+            }
+        }
+
+        const Fox = {
+            sx: 0,
+            sy: 0,
+            sw: 256,
+            sh: 256,
+            dx: canvas.width / 2 - 50,
+            dy: canvas.height / 2 - 50,
+            dw: 100,
+            dh: 100,
+            selected: function() {
+                if (pet == 1) {
+                    const fox = new Image();
+                    fox.src = "sourceimage/fox.png";
+                    ctx.drawImage(fox, this.sx, this.sy, this.sw, this.sh, this.dx + 150, this.dy + 150, this.dw, this.dh);
+                }
+            }
+        }
+
+        const Uni = {
+            sx: 0,
+            sy: 0,
+            sw: 256,
+            sh: 256,
+            dx: canvas.width / 2 + 150,
+            dy: canvas.height / 2 - 50,
+            dw: 100,
+            dh: 100,
+            selected: function() {
+                if (pet == 2) {
+                    const uni = new Image();
+                    uni.src = "sourceimage/uni.png";
+                    ctx.drawImage(uni, this.sx, this.sy, this.sw, this.sh, 500, 400, this.dw, this.dh);
+                }
+            }
+        }
+
+        const Din = {
+            sx: 0,
+            sy: 0,
+            sw: 256,
+            sh: 256,
+            dx: canvas.width / 2 - 250,
+            dy: canvas.height / 2 - 50,
+            dw: 100,
+            dh: 100,
+            selected: function() {
+                if (pet == 0) {
+                    const dinosuar = new Image();
+                    dinosuar.src = "sourceimage/dinosaur.png";
+                    ctx.drawImage(dinosuar, this.sx, this.sy, this.sw, this.sh, 500, 400, this.dw, this.dh);
+                }
+            }
+        }
+
+        const rightArrow = {
+            sx: 0,
+            sy: 0,
+            sh: 256,
+            sw: 256,
+            dx: canvas.width / 2 + 300,
+            dy: canvas.height / 2 - 70,
+            dw: 100,
+            dh: 100,
+            draw: function() {
+                if (status.current == status.game) {
+                    const RA = new Image();
+                    RA.src = "sourceimage/rightarrow.png";
+                    ctx.drawImage(RA, this.sx, this.sy, this.sw, this.sh, this.dx, this.dy, this.dw, this.dh);
+                }
+            }
+        }
+
+        const leftArrow = {
+            sx: 0,
+            sy: 0,
+            sh: 256,
+            sw: 256,
+            dx: canvas.width / 2 - 400,
+            dy: canvas.height / 2 - 70,
+            dw: 100,
+            dh: 100,
+            draw: function() {
+                if (status.current == status.game) {
+                    const LA = new Image();
+                    LA.src = "sourceimage/leftarrow.png";
+                    ctx.drawImage(LA, this.sx, this.sy, this.sw, this.sh, this.dx, this.dy, this.dw, this.dh);
+                }
+            }
+        }
+
+        const heart = new Image();
+        heart.src = "sourceimage/heart_red.png";
+        const Heart = {
+            sx: 0,
+            sy: 0,
+            sw: 256,
+            sh: 256,
+            dx: 10,
+            dy: 10,
+            dw: 50,
+            dh: 50,
+            draw: function() {
+                if (status.current == status.game || room.r_sel == room.living || room.r_sel == room.bed) {
+                    this.dx = 10;
+                    for (var i = 0; i < mood; i++) {
+                        ctx.drawImage(heart, this.sx, this.sy, this.sw, this.sh, this.dx, this.dy, this.dw, this.dh);
+                        this.dx += 50;
+                    }
+                }
+            }
+        }
+
+        const GrowthEdge = {
+            sx: 0,
+            sy: 0,
+            sw: 256,
+            sh: 256,
+            dx: 680,
+            dy: 0,
+            dw: 100,
+            dh: 80,
+            draw: function() {
+                if (status.current == status.game || room.r_sel == room.living || room.r_sel == room.bed) {
+                    const edge = new Image();
+                    edge.src = "sourceImage/grow.png";
+                    ctx.drawImage(edge, this.sx, this.sy, this.sw, this.sh, this.dx, this.dy, this.dw, this.dh);
+                }
+            }
+        }
+
+        const Growth = {
+            sx: 0,
+            sy: 0,
+            sw: 256,
+            sh: 256,
+            dx: 680,
+            dy: 0,
+            dw: 100,
+            dh: 80,
+            draw: function() {
+                if (status.current == status.game || room.r_sel == room.living || room.r_sel == room.bed) {
+                    this.dx = 680;
+                    for (var i = 0; i < growth; i++) {
+                        const growth = new Image();
+                        growth.src = "sourceImage/growth.png";
+                        ctx.drawImage(growth, this.sx, this.sy, this.sw, this.sh, this.dx, this.dy, this.dw, this.dh);
+                        this.dx += 9.5;
+                    }
+                }
+            }
+        }
+
+        const meat = new Image();
+        meat.src = "sourceimage/meat.png";
+        const Eat = {
+            sx: 0,
+            sy: 0,
+            sw: 256,
+            sh: 256,
+            dx: 20,
+            dy: 520,
+            dw: 70,
+            dh: 70,
+            draw: function() {
+                if (room.r_sel == room.living) {
+                    ctx.drawImage(meat, this.sx, this.sy, this.sw, this.sh, this.dx, this.dy, this.dw, this.dh);
+                }
+            }
+        }
+
+        const play = new Image();
+        play.src = "sourceimage/play.png";
+        const Play = {
+            sx: 0,
+            sy: 0,
+            sw: 256,
+            sh: 256,
+            dx: 100,
+            dy: 520,
+            dw: 70,
+            dh: 70,
+            draw: function() {
+                if (room.r_sel == room.living) {
+                    ctx.drawImage(play, this.sx, this.sy, this.sw, this.sh, this.dx, this.dy, this.dw, this.dh);
+                }
+            }
+        }
+
+        const sleep = new Image();
+        sleep.src = "sourceimage/sleep.png";
+        const Sleep = {
+            sx: 0,
+            sy: 0,
+            sw: 256,
+            sh: 256,
+            dx: 20,
+            dy: 520,
+            dw: 70,
+            dh: 70,
+            draw: function() {
+                if (room.r_sel == room.bed) {
+                    ctx.drawImage(sleep, this.sx, this.sy, this.sw, this.sh, this.dx, this.dy, this.dw, this.dh);
+                }
+            }
+        }
+
+        const Feast = {
+            sx: 0,
+            sy: 0,
+            sw: 240,
+            sh: 160,
+            dx: 0,
+            dy: 0,
+            dw: 800,
+            dh: 600,
+            draw: function() {
+                if (status.current == status.gameOver2) {
+                    const feast = new Image();
+                    feast.src = "sourceimage/feast.jpg";
+                    ctx.drawImage(feast, this.sx, this.sy, this.sw, this.sh, this.dx, this.dy, this.dw, this.dh);
+                }
+            }
+        }
+
+        const Door = {
+            sx: 0,
+            sy: 0,
+            sw: 275,
+            sh: 183,
+            dx: 0,
+            dy: 0,
+            dw: 800,
+            dh: 600,
+            draw: function() {
+                if (status.current == status.gameOver1) {
+                    const door = new Image();
+                    door.src = "sourceimage/door.jpg";
+                    ctx.drawImage(door, this.sx, this.sy, this.sw, this.sh, this.dx, this.dy, this.dw, this.dh);
+                }
+            }
+        }
+
+        function draw() {
+            bedroom.draw();
+            Livingroom.draw();
+            Door.draw();
+            if (pet.p_sel == pet.fox) {
+                Fox.selected();
+            }
+            if (pet.p_sel == pet.uni) {
+                Uni.selected();
+            }
+            if (pet.p_sel == pet.din) {
+                Din.selected();
+            }
+            Heart.draw();
+            GrowthEdge.draw();
+            Growth.draw();
+            Eat.draw();
+            Play.draw();
+            Sleep.draw();
+            leftArrow.draw();
+            rightArrow.draw();
+            Feast.draw();
+            getReady.draw();
+        }
+
+        function loop() {
+            draw();
+            if (status.current == status.game) {
+                music.play();
+            }
+            if(status.current == status.gameOver1){
+                music.pause();
+                GO1.play();
+            }
+            if(status.current == status.gameOver2){
+                music.pause();
+                GO2.play();
+            }
+            if (mood == 0) {
+                pet.p_sel = null;
+                room.r_sel = room.door;
+                status.current = status.gameOver1;
+            }
+            if (growth == 10) {
+                pet.p_sel = null;
+                room.r_sel = room.feast;
+                status.current = status.gameOver2;
+            }
+            requestAnimationFrame(loop);
+        }
+        loop();
+
+    </script>
+</body>
+
+</html>

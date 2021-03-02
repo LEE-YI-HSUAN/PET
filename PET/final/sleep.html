@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>SLEEP</title>
+    <style>
+        canvas {
+            margin: 0 auto;
+            display: block;
+            border: 1px solid black;
+        }
+
+    </style>
+    <script src="js/jquery-3.5.1.min.js"></script>
+    <script src="js/jquery.params.js"></script>
+
+</head>
+
+<body>
+    <canvas id="myCanvas" width="800" height="600"></canvas>
+    <script>
+        const canvas = document.getElementById("myCanvas");
+        const ctx = canvas.getContext("2d");
+
+        //讀取圖片
+        const cloud = new Image();
+        cloud.src = "img/cloud.png";
+        const ghost = new Image();
+        ghost.src = "img/ghost.png";
+        const startBox = new Image();
+        startBox.src = "img/startBox.png";
+        const startBtn = new Image();
+        startBtn.src = "img/startBtn.png";
+        const okBtn = new Image();
+        okBtn.src = "img/okBtn.png";
+        const bullet = new Image();
+        bullet.src = "img/bullet.png";
+
+        //載入音樂
+        const point = new Audio();
+        point.src = "audio/point.wav";
+        const shoot = new Audio();
+        shoot.src = "audio/shoot.wav";
+        const hit = new Audio();
+        hit.src = "audio/hit.wav";
+        const lose = new Audio();
+        lose.src = "audio/lose.mp3";
+        const win = new Audio();
+        win.src = "audio/win.mp3";
+        const background = new Audio();
+        background.src = "audio/background.mp3";
+
+        var pet = $.query.get("pet");
+        console.log(pet);
+        var growth = $.query.get("growth");
+        console.log(growth);
+        var mood = $.query.get("mood");
+        console.log(mood);
+
+
+
+        //準備訊息
+        const S_getReady = {
+            sx: 0,
+            sy: 65,
+            sw: 256,
+            sh: 127,
+            dx: canvas.width / 2 - 75,
+            dy: 400,
+            dw: 150,
+            dh: 50,
+            draw: function() {
+                if (S_status.current == S_status.getReady) {
+                    ctx.drawImage(startBox, 0, 0, 256, 256, 105, 80, 600, 300);
+                    ctx.drawImage(startBtn, this.sx, this.sy, this.sw, this.sh, this.dx, this.dy, this.dw, this.dh);
+                    ctx.fillStyle = "black";
+                    ctx.font = "40px 微軟正黑體";
+                    ctx.fillText("打敗鬼鬼睡好覺！", canvas.width / 2 - 135, 145);
+                    ctx.font = "30px 微軟正黑體";
+                    ctx.fillText("遊玩方式：用滑鼠上下移動並點擊射擊", canvas.width / 2 - 250, 210);
+                    ctx.fillText("打敗10隻鬼鬼 -> 成功 (成長值加一格)", canvas.width / 2 - 250, 260);
+                    ctx.fillText("有一個鬼鬼沒打到 -> 失敗 (扣一顆心)", canvas.width / 2 - 250, 310);
+                }
+            }
+        }
+
+        //遊戲結束
+        const S_gameOver = {
+            sx: 0,
+            sy: 65,
+            sw: 256,
+            sh: 127,
+            dx: canvas.width / 2 - 75,
+            dy: 400,
+            dw: 150,
+            dh: 50,
+            draw: function() {
+                if (S_status.current == S_status.gameOver) {
+                    background.pause();
+                    background.currentTime = 0;
+                    ctx.drawImage(startBox, 0, 0, 256, 256, 105, 80, 600, 300);
+                    ctx.drawImage(okBtn, this.sx, this.sy, this.sw, this.sh, this.dx, this.dy, this.dw, this.dh);
+                    if (S_score.value == 10) {
+                        win.play();
+                        ctx.fillStyle = "black";
+                        ctx.font = "40px 微軟正黑體";
+                        ctx.fillText("恭喜成功！", canvas.width / 2 - 80, 145);
+                        ctx.font = "30px 微軟正黑體";
+                        ctx.fillText("成長值加一格", canvas.width / 2 - 80, 250);
+                    } else if(S_score.value < 10) {
+                        lose.play();
+                        ctx.fillStyle = "black";
+                        ctx.font = "40px 微軟正黑體";
+                        ctx.fillText("很遺憾你失敗了！", canvas.width / 2 - 135, 145);
+                        ctx.font = "30px 微軟正黑體";
+                        ctx.fillText("扣一顆心QQ", canvas.width / 2 - 80, 250);
+                    }
+                }
+            }
+        }
+
+        //繪製分數
+        const S_score = {
+            value: 0,
+            draw: function() {
+                ctx.fillStyle = "white";
+                ctx.strokeStyle = "black";
+
+                if (S_status.current == S_status.game) {
+                    ctx.lineWidth = 3;
+                    ctx.font = "80px 微軟正黑體";
+                    ctx.fillText(this.value, canvas.width / 2, 80);
+                    ctx.strokeText(this.value, canvas.width / 2, 80);
+                }
+                if (this.value == 10) {
+                    S_status.current = S_status.gameOver;
+                }
+            },
+            reset: function() {
+                this.value = 0;
+            }
+        }
+
+        //遊戲狀態紀錄
+        const S_status = {
+            current: 0,
+            getReady: 0,
+            game: 1,
+            gameOver: 2
+        }
+
+        //開始按鈕
+        const S_btnStart = {
+            x: canvas.width / 2 - 75,
+            y: 400,
+            width: 150,
+            height: 50
+        }
+
+        var bb = false;
+
+        //遊戲流程控制
+        canvas.addEventListener("click", function(e) {
+            let rect = canvas.getBoundingClientRect();
+            let clickX = e.clientX - rect.left;
+            let clickY = e.clientY - rect.top;
+
+            switch (S_status.current) {
+                case S_status.getReady:
+                    background.play();
+                    //判斷滑鼠是否點擊開始按鈕
+                    if (clickX >= S_btnStart.x &&
+                        clickX <= S_btnStart.x + S_btnStart.width &&
+                        clickY >= S_btnStart.y &&
+                        clickY <= S_btnStart.y + S_btnStart.height) {
+                        S_status.current = S_status.game;
+                    }
+                    break;
+                case S_status.game:
+                    //設定進去遊戲，寵物可開始射擊
+                    bb = true;
+                    shoot.play();
+                    break;
+                case S_status.gameOver:
+                    //判斷滑鼠是否點擊ok按鈕
+                    if (clickX >= S_btnStart.x &&
+                        clickX <= S_btnStart.x + S_btnStart.width &&
+                        clickY >= S_btnStart.y &&
+                        clickY <= S_btnStart.y + S_btnStart.height) {
+                        if (S_score.value == 10) {
+                            growth++;
+                        } else {
+                            mood--;
+                        }
+                        window.location.href = "final.html?pet=" + pet + "&growth=" + growth + "&mood=" + mood;
+                        
+                    }
+                    break;
+            }
+        })
+
+        //建立一個物件儲存滑鼠目前的x,y座標
+        let S_mouse = {
+            x: 0,
+            y: 0,
+        }
+
+        //加入監聽器
+        window.addEventListener('mousemove', (event) => {
+            //在這裡把滑鼠座標寫到物件mouse中
+            S_mouse.x = event.pageX;
+            S_mouse.y = event.pageY;
+        })
+
+        //記數畫面經過多少個影格
+        let S_frames = 0;
+
+        //畫寵物
+        const S_animal = {
+            sx: 0,
+            sy: 0,
+            sw: 256,
+            sh: 256,
+            dx: 10,
+            dy: 420,
+            dw: 150,
+            dh: 150,
+            draw: function() {
+                if (pet == 2) {
+                    const animal = new Image();
+                    animal.src = "img/animal1.png";
+                    ctx.drawImage(animal, this.sx, this.sy, this.sw, this.sh, this.dx, this.dy, this.dw, this.dh);
+                } else if (pet == 0) {
+                    const animal = new Image();
+                    animal.src = "img/animal2.png";
+                    ctx.drawImage(animal, this.sx, this.sy, this.sw, this.sh, this.dx, this.dy, this.dw, this.dh);
+                } else if (pet == 1) {
+                    const animal = new Image();
+                    animal.src = "img/animal3.png";
+                    ctx.drawImage(animal, this.sx, this.sy, this.sw, this.sh, this.dx, this.dy, this.dw, this.dh);
+                }
+            },
+            update: function() {
+                if (S_status.current == S_status.game) {
+                    this.dy = S_mouse.y - 100;
+                } else {
+                    this.dy = 420;
+                }
+            }
+        }
+
+        //畫子彈
+        const S_bullet = {
+            sx: 0,
+            sy: 0,
+            sw: 384,
+            sh: 384,
+            dw: 50,
+            dh: 50,
+            rightx: 4,
+            position: [],
+            draw: function() {
+                if (S_status.current == S_status.game) {
+                    for (var i = 0; i < this.position.length; i++) {
+                        let X = this.position[i].x;
+                        let Y = this.position[i].y;
+                        ctx.drawImage(bullet, this.sx, this.sy, this.sw, this.sh, X, Y, this.dw, this.dh);
+                    }
+                }
+            },
+            update: function() {
+                if (S_status.current != S_status.game) return;
+                //點擊出現子彈
+                if (bb == true) {
+                    this.position.push({
+                        x: 80,
+                        y: S_mouse.y - 25
+                    });
+                    bb = false;
+                }
+                //設定子彈x軸
+                for (var i = 0; i < this.position.length; i++) {
+                    this.position[i].x += this.rightx;
+
+                    //子彈到底就從陣列中移除
+                    if (this.position[i].x + this.dw >= 800) {
+                        this.position.shift();
+                    }
+                }
+            }
+        }
+
+        //繪製背景
+        const S_bg = {
+            sx: 0,
+            sy: 888,
+            sw: 1024,
+            sh: 136,
+            dx: 0,
+            dy: canvas.height - 100,
+            dw: 800,
+            dh: 100,
+            leftx: 2,
+            draw: function() {
+                ctx.drawImage(cloud, this.sx, this.sy, this.sw, this.sh, this.dx, this.dy, this.dw, this.dh);
+                ctx.drawImage(cloud, this.sx, this.sy, this.sw, this.sh, this.dx + this.sw - 250, this.dy, this.dw, this.dh);
+            },
+            update: function() {
+                if (S_status.current == S_status.game) {
+                    this.dx = (this.dx - this.leftx) % (this.dw / this.leftx);
+                }
+            }
+        }
+
+        //繪製鬼鬼
+        const S_ghost = {
+            sx: 0,
+            sy: 0,
+            sw: 384,
+            sh: 384,
+            dw: 150,
+            dh: 150,
+            leftx: 4,
+            maxY: 150,
+            position: [],
+            draw: function() {
+                if (S_status.current == S_status.game) {
+                    for (var i = 0; i < this.position.length; i++) {
+                        let X = this.position[i].x;
+                        let Y = this.position[i].y;
+                        ctx.drawImage(ghost, this.sx, this.sy, this.sw, this.sh, X, Y, this.dw, this.dh);
+                    }
+                }
+            },
+            update: function() {
+                if (S_status.current != S_status.game) return;
+                //讓鬼鬼重複出現，每100影格則隨機建立鬼鬼y位置
+                if (S_frames % 100 == 0) {
+                    this.position.push({
+                        x: canvas.width,
+                        y: Math.floor(this.maxY * (Math.random() + 1))
+                    });
+                }
+                //設定鬼鬼x軸
+                for (var i = 0; i < this.position.length; i++) {
+                    this.position[i].x -= this.leftx;
+
+                    //鬼鬼到底就結束遊戲
+                    if (this.position[i].x + this.dw <= 280) {
+                        hit.play();
+                        S_status.current = S_status.gameOver;
+                    }
+
+                    //鬼鬼與子彈的碰撞偵測
+                    for (var j = 0; j < S_bullet.position.length; j++) {
+                        if (S_bullet.position[j].x + S_bullet.dw > this.position[i].x + 20 &&
+                            S_bullet.position[j].x < this.position[i].x - 20 + this.dw &&
+                            S_bullet.position[j].y + S_bullet.dh > this.position[i].y + 20 &&
+                            S_bullet.position[j].y < this.position[i].y - 20 + this.dh) {
+                            point.play();
+                            this.position.shift();
+                            S_bullet.position.shift();
+                            S_score.value += 1;
+                            break;
+                        }
+                    }
+                }
+            },
+            reset: function() {
+                this.position = [];
+            }
+        }
+
+        //繪圖區
+        function S_draw() {
+            ctx.fillStyle = "lightskyblue";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            S_bg.draw();
+            S_bullet.draw();
+            S_animal.draw();
+            S_ghost.draw();
+            S_getReady.draw();
+            S_gameOver.draw();
+            S_score.draw();
+        }
+
+        function S_update() {
+            S_animal.update();
+            S_bullet.update();
+            S_bg.update();
+            S_ghost.update();
+        }
+
+        //遊戲循環主體
+        function S_loop() {
+            S_update();
+            S_draw();
+            S_frames++;
+            requestAnimationFrame(S_loop);
+        }
+
+        //開始遊戲
+        S_loop();
+
+    </script>
+</body>
+
+</html>
